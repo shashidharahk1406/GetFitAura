@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-jo@wujgy8q7hk4m3-j5b7!l7!@2j-qujvjlqamh_3!-#9h8*-8
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['http://get-fit-aura.vercel.app', 'http://127.0.0.1', 'http://localhost']
+ALLOWED_HOSTS = ['https://get-fit-aura.vercel.app', 'http://127.0.0.1', 'http://localhost']
 
 
 # Application definition
@@ -131,7 +131,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:8100", 
-     'http://get-fit-aura.vercel.app', 'http://127.0.0.1:8000', 'http://localhost' # Ionic app's origin
+     'https://get-fit-aura.vercel.app', 'http://127.0.0.1:8000', 'http://localhost' # Ionic app's origin
 ]
 
 
