@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-jo@wujgy8q7hk4m3-j5b7!l7!@2j-qujvjlqamh_3!-#9h8*-8
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['get-fit-aura.vercel.app', '127.0.0.1', 'localhost']
 
 
 # Application definition
