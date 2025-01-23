@@ -130,7 +130,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:8100",  # Ionic app's origin
+    "http://localhost:8100", 
+     'http://get-fit-aura.vercel.app', 'http://127.0.0.1:8000', 'http://localhost' # Ionic app's origin
 ]
 
 
