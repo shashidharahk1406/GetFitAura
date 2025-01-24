@@ -132,3 +132,240 @@ class DashboardData(APIView):
             "calorie_logs": calorie_logs_serializer.data,
             "self_check_logs": self_check_logs_serializer.data
         })
+
+from rest_framework import viewsets
+from .models import Question
+from .serializers import QuestionSerializer
+
+class QuestionViewSet(viewsets.ModelViewSet):
+    queryset = Question.objects.all().order_by('id')  # Order questions by ID for consistent presentation
+    serializer_class = QuestionSerializer
+
+
+
+
+# from rest_framework.decorators import api_view
+# from rest_framework.response import Response
+# from .models import Question
+# from .serializers import QuestionSerializer
+
+# @api_view(['GET'])
+# def get_questions(request):
+#     permission_classes = [IsAuthenticated] 
+#     questions = Question.objects.all()
+#     serializer = QuestionSerializer(questions, many=True)
+#     return Response(serializer.data)
+
+
+from rest_framework import generics
+from .models import Question
+from .serializers import QuestionSerializer
+
+class QuestionListView(generics.ListAPIView):
+    queryset = Question.objects.all()
+    serializer_class = QuestionSerializer
+
+
+
+
+
+from rest_framework import viewsets, generics
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from .models import Question, Option, UserAnswer, DietPlan, DietPlanItem
+from .serializers import QuestionSerializer, UserAnswerSerializer, DietPlanSerializer
+# from .diet_plan_logic import generate_diet_plan
+
+# class UserAnswerCreateView(generics.CreateAPIView):
+#     permission_classes = [IsAuthenticated]
+#     serializer_class = UserAnswerSerializer
+
+#     def create(self, request, *args, **kwargs):
+#         user_answers_data = request.data
+
+#         try:
+#             user_answers = []
+#             for answer_data in user_answers_data:
+#                 question_id = answer_data.get('questionId')
+#                 option_id = answer_data.get('optionId')
+
+#                 if not question_id or not option_id:
+#                     return Response({"error": "Invalid answer format."}, status=400)
+
+#                 try:
+#                     question = Question.objects.get(id=question_id)
+#                     option = Option.objects.get(id=option_id, question=question)
+#                     user_answer = UserAnswer(user=request.user, question=question, option=option)
+#                     user_answers.append(user_answer)
+#                 except Question.DoesNotExist:
+#                     return Response({"error": f"Question with ID {question_id} not found."}, status=400)
+#                 except Option.DoesNotExist:
+#                     return Response({"error": f"Option with ID {option_id} not found for question {question_id}."}, status=400)
+
+#             UserAnswer.objects.bulk_create(user_answers)
+
+#             # Generate diet plan
+#             diet_plan = generate_diet_plan(user_answers) 
+
+#             # Create DietPlan and DietPlanItem objects
+#             diet_plan_instance = DietPlan.objects.create(user=request.user)
+#             for meal_time, food_items in diet_plan.items():
+#                 for food_item in food_items:
+#                     DietPlanItem.objects.create(
+#                         diet_plan=diet_plan_instance,
+#                         meal_time=meal_time,
+#                         food_item=food_item['name'],
+#                         description=food_item['description']
+#                     )
+
+#             serializer = DietPlanSerializer(diet_plan_instance)
+#             return Response(serializer.data, status=201)
+#         except Exception as e:
+#             return Response({"error": str(e)}, status=500)
+
+
+
+
+
+
+class UserAnswerCreateView(generics.CreateAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = UserAnswerSerializer
+
+    def create(self, request, *args, **kwargs):
+        user_answers_data = request.data
+
+        try:
+            user_answers = []
+            for answer_data in user_answers_data:
+                question_id = answer_data.get('questionId')
+                option_id = answer_data.get('optionId')
+
+                if not question_id or not option_id:
+                    return Response({"error": "Invalid answer format."}, status=400)
+
+                try:
+                    question = Question.objects.get(id=question_id)
+                    option = Option.objects.get(id=option_id, question=question)
+
+                    user_answer, created = UserAnswer.objects.get_or_create(
+                        user=request.user, 
+                        question=question, 
+                        defaults={'option': option} 
+                    ) 
+                    user_answers.append(user_answer) 
+
+                except Question.DoesNotExist:
+                    return Response({"error": f"Question with ID {question_id} not found."}, status=400)
+                except Option.DoesNotExist:
+                    return Response({"error": f"Option with ID {option_id} not found for question {question_id}."}, status=400)
+
+            # Generate diet plan
+            diet_plan = generate_diet_plan(user_answers) 
+
+            # Create DietPlan and DietPlanItem objects
+            diet_plan_instance = DietPlan.objects.create(user=request.user)
+
+            for meal_time, food_items in diet_plan.items():
+                for food_item in food_items:
+                    # Check if a DietPlanItem with the same meal_time and food_item already exists
+                    existing_item = DietPlanItem.objects.filter(
+                        diet_plan=diet_plan_instance,
+                        meal_time=meal_time,
+                        food_item=food_item['name']
+                    ).first()
+
+                    if not existing_item:
+                        DietPlanItem.objects.create(
+                            diet_plan=diet_plan_instance,
+                            meal_time=meal_time,
+                            food_item=food_item['name'],
+                            description=food_item['description']
+                        )
+
+            serializer = DietPlanSerializer(diet_plan_instance)
+            return Response(serializer.data, status=201)
+        except Exception as e:
+            return Response({"error": str(e)}, status=500)
+        
+class DietPlanListView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = DietPlanSerializer
+
+    def get_queryset(self):
+        return DietPlan.objects.filter(user=self.request.user)
+
+# diet_plan_logic.py
+from .models import UserAnswer, Question
+
+def generate_diet_plan(user_answers):
+    """
+    Generates a basic diet plan based on user answers.
+
+    This is a simplified example and needs to be further enhanced with 
+    more complex logic based on your specific requirements.
+
+    Args:
+        user_answers: A list of UserAnswer objects.
+
+    Returns:
+        A dictionary representing the diet plan, with keys for each meal time 
+        and values as lists of food items.
+    """
+
+    diet_plan = {}
+
+    # Example: Simplified logic based on a few questions 
+    exercise_frequency = None
+    fruit_vegetable_intake = None
+
+    for answer in user_answers:
+        if answer.question.question_text == "How often do you exercise in a week?": 
+            if answer.option.option_text == "4-5 times":
+                exercise_frequency = "Active"
+
+        if answer.question.question_text == "How often do you eat fruits and vegetables?":
+            if answer.option.option_text == "Daily":
+                fruit_vegetable_intake = "High"
+
+    if exercise_frequency == "Active" and fruit_vegetable_intake == "High":
+        diet_plan = {
+            "morning_breakfast": [
+                {"name": "Oatmeal with berries and nuts", "description": ""},
+                {"name": "Yogurt with fruit and granola", "description": ""}
+            ],
+            "lunch": [
+                {"name": "Grilled chicken salad", "description": ""},
+                {"name": "Lentil soup with whole-grain bread", "description": ""}
+            ],
+            "dinner": [
+                {"name": "Salmon with roasted vegetables", "description": ""},
+                {"name": "Vegetarian stir-fry with brown rice", "description": ""}
+            ],
+            "snacks": [
+                {"name": "Fruit and nuts", "description": ""},
+                {"name": "Greek yogurt", "description": ""}
+            ]
+        }
+    else:
+        # Default diet plan 
+        diet_plan = {
+            "morning_breakfast": [
+                {"name": "Scrambled eggs with whole-grain toast", "description": ""},
+                {"name": "Smoothie with fruit and spinach", "description": ""}
+            ],
+            "lunch": [
+                {"name": "Tuna salad sandwich on whole-grain bread", "description": ""},
+                {"name": "Chicken or vegetable stir-fry with brown rice", "description": ""}
+            ],
+            "dinner": [
+                {"name": "Grilled chicken or fish with roasted vegetables", "description": ""},
+                {"name": "Lentil soup with whole-grain bread", "description": ""}
+            ],
+            "snacks": [
+                {"name": "Apple with almond butter", "description": ""},
+                {"name": "Greek yogurt with berries", "description": ""}
+            ]
+        }
+
+    return diet_plan

@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-jo@wujgy8q7hk4m3-j5b7!l7!@2j-qujvjlqamh_3!-#9h8*-8
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['https://get-fit-aura.vercel.app', 'http://127.0.0.1', 'http://localhost']
+ALLOWED_HOSTS = []
 
 
 # Application definition
@@ -41,7 +41,8 @@ INSTALLED_APPS = [
     'corsheaders',
     'rest_framework_simplejwt',
     'user',
-    'main'
+    'main',
+    'django.contrib.postgres', 
 ]
 
 MIDDLEWARE = [
@@ -52,8 +53,10 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-     'corsheaders.middleware.CorsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
+    
 ]
+MIDDLEWARE.insert(0, 'corsheaders.middleware.CorsMiddleware')
 
 ROOT_URLCONF = 'getfitaura.urls'
 
@@ -130,8 +133,10 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 CORS_ALLOWED_ORIGINS = [
+    "http://localhost:8100",
+    "http://localhost:8000", # Ionic app's origin
+    "http://127.0.0.1:8000",
     "http://localhost:8100", 
-     'https://get-fit-aura.vercel.app', 'http://127.0.0.1:8000', 'http://localhost' # Ionic app's origin
 ]
 
 
@@ -167,3 +172,4 @@ AUTH_USER_MODEL = 'user.CustomUser'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+CORS_ALLOW_ALL_ORIGINS = True
